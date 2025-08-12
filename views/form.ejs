@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>同意書フォーム</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 20px; }
+        .form-field { margin-bottom: 20px; }
+        label { font-weight: bold; }
+        input[type="text"], textarea { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { font-size: 16px; padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <h1>同意書フォーム</h1>
+    <% if (message) { %>
+        <p style="color: green;"><%= message %></p>
+    <% } %>
+    <form method="post">
+        <% fields.forEach(field => { %>
+            <div class="form-field">
+                <label for="field-<%= field.id %>"><%= field.label %></label><br>
+                <% const answer = answers.find(a => a.field_id === field.id) || { value: '' }; %>
+                
+                <% if (field.type === 'text') { %>
+                    <input type="text" id="field-<%= field.id %>" name="<%= field.id %>" value="<%= answer.value %>" required>
+                <% } else if (field.type === 'textarea') { %>
+                    <textarea id="field-<%= field.id %>" name="<%= field.id %>" rows="5" required><%= answer.value %></textarea>
+                <% } else if (field.type === 'radio' && field.options) { %>
+                    <% JSON.parse(field.options).forEach(option => { %>
+                        <label>
+                            <input type="radio" name="<%= field.id %>" value="<%= option %>" <%= answer.value === option ? 'checked' : '' %> required>
+                            <%= option %>
+                        </label>
+                    <% }); %>
+                <% } %>
+            </div>
+        <% }); %>
+        <button type="submit">同意して送信する</button>
+    </form>
+</body>
+</html>

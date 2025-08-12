@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>フォーム管理</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 20px; }
+        .field-item { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+        input, select, textarea, button { font-size: 16px; padding: 5px; margin-top: 5px; }
+        .options-container { margin-left: 20px; }
+    </style>
+</head>
+<body>
+    <h1>フォーム項目管理</h1>
+    <form action="/admin/form" method="post">
+        <div id="fields-container">
+            <% fields.forEach(field => { %>
+                <div class="field-item">
+                    <label>質問文:</label><br>
+                    <input type="text" name="label" value="<%= field.label %>" required><br>
+                    <label>種類:</label><br>
+                    <select name="type" onchange="toggleOptions(this)">
+                        <option value="text" <%= field.type === 'text' ? 'selected' : '' %>>一行テキスト</option>
+                        <option value="textarea" <%= field.type === 'textarea' ? 'selected' : '' %>>複数行テキスト</option>
+                        <option value="radio" <%= field.type === 'radio' ? 'selected' : '' %>>ラジオボタン</option>
+                    </select>
+                    <div class="options-container" style="display: <%= field.type === 'radio' ? 'block' : 'none' %>;">
+                        <label>選択肢 (カンマ区切り):</label><br>
+                        <input type="text" name="options" value="<%= field.options ? JSON.parse(field.options).join(',') : '' %>">
+                    </div>
+                    <button type="button" onclick="removeField(this)">削除</button>
+                </div>
+            <% }); %>
+        </div>
+        <button type="button" onclick="addField()">項目を追加</button>
+        <hr>
+        <button type="submit">フォームを保存</button>
+    </form>
+
+    <script>
+        function addField() {
+            const container = document.getElementById('fields-container');
+            const newItem = document.createElement('div');
+            newItem.className = 'field-item';
+            newItem.innerHTML = `
+                <label>質問文:</label><br>
+                <input type="text" name="label" required><br>
+                <label>種類:</label><br>
+                <select name="type" onchange="toggleOptions(this)">
+                    <option value="text">一行テキスト</option>
+                    <option value="textarea">複数行テキスト</option>
+                    <option value="radio">ラジオボタン</option>
+                </select>
+                <div class="options-container" style="display: none;">
+                    <label>選択肢 (カンマ区切り):</label><br>
+                    <input type="text" name="options">
+                </div>
+                <button type="button" onclick="removeField(this)">削除</button>
+            `;
+            container.appendChild(newItem);
+        }
+
+        function removeField(button) {
+            button.parentElement.remove();
+        }
+
+        function toggleOptions(select) {
+            const optionsContainer = select.nextElementSibling;
+            optionsContainer.style.display = select.value === 'radio' ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>
