@@ -1,6 +1,3 @@
-// index.js (統合版)
-
-// --- 必要なモジュールをすべてインポート ---
 const express = require('express');
 const { open } = require('sqlite');
 const sqlite3 = require('sqlite3');
@@ -18,12 +15,10 @@ const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const TARGET_FORUM_ID = process.env.FORUM_CHANNEL_ID;
 const MY_URL = process.env.URL;
 
-// --- Express と Discord クライアントの初期化 ---
 const app = express();
 const discordClient = new Client({ intents: [GatewayIntentBits.Guilds] });
-let db; // データベース接続はグローバルで保持
+let db; 
 
-// --- データベース初期化機能 ---
 async function initializeDatabase() {
     try {
         await fs.mkdir(DB_DIR, { recursive: true });
@@ -195,7 +190,7 @@ async function notifyDiscord(threadId, answers) {
         const thread = await discordClient.channels.fetch(threadId);
         if (!thread || !thread.isTextBased()) return;
         const fields = await db.all('SELECT id, label FROM fields ORDER BY field_order');
-        const embedFields = fields.map(field => ({ name: field.label, value: answers[field.id] || '(未回答)', inline: false }));
+        const embedFields = fields.map(field => ({ name: field.label, value: `- ${answers[field.id]}` || '(未回答)', inline: false }));
         const embed = new EmbedBuilder().setColor(0x5865F2).setTitle('📝 フォームの回答が提出されました').addFields(embedFields).setTimestamp();
         await thread.send({ embeds: [embed] });
         console.log(`✅ Discordスレッドに通知を送信しました (ID: ${threadId})`);
