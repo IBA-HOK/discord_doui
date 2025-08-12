@@ -1,33 +1,38 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>フォーム管理</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
     <div class="container">
         <h1>フォーム項目管理</h1>
         <form action="/admin/form" method="post">
             <div id="fields-container">
-                <% fields.forEach(field => { %>
+                <% fields.forEach((field, index)=> { %>
                     <div class="field-item">
                         <label>質問文:</label>
-                        <input type="text" name="label" value="<%= field.label %>" required>
+                        <input type="text" name="fields[<%= index %>][label]" value="<%= field.label %>" required>
                         <label>種類:</label>
-                        <select name="type" onchange="toggleOptions(this)">
-                            <option value="text" <%= field.type === 'text' ? 'selected' : '' %>>一行テキスト</option>
-                            <option value="textarea" <%= field.type === 'textarea' ? 'selected' : '' %>>複数行テキスト</option>
-                            <option value="radio" <%= field.type === 'radio' ? 'selected' : '' %>>ラジオボタン</option>
+                        <select name="fields[<%= index %>][type]" onchange="toggleOptions(this)">
+                            <option value="text" <%=field.type==='text' ? 'selected' : '' %>>一行テキスト</option>
+                            <option value="textarea" <%=field.type==='textarea' ? 'selected' : '' %>>複数行テキスト</option>
+                            <option value="radio" <%=field.type==='radio' ? 'selected' : '' %>>ラジオボタン</option>
                         </select>
-                        <div class="options-container" style="display: <%= field.type === 'radio' ? 'block' : 'none' %>; margin-top: 10px;">
+                        <div class="options-container"
+                            style="display: <%= field.type === 'radio' ? 'block' : 'none' %>; margin-top: 10px;">
                             <label>選択肢 (カンマ区切り):</label>
-                            <input type="text" name="options" value="<%= field.options ? JSON.parse(field.options).join(',') : '' %>">
+                            <input type="text" name="fields[<%= index %>][options]"
+                                value="<%= field.options ? JSON.parse(field.options).join(',') : '' %>">
                         </div>
-                        <button type="button" class="btn btn-danger" onclick="removeField(this)" style="margin-top: 15px;">この項目を削除</button>
+                        <button type="button" class="btn btn-danger" onclick="removeField(this)"
+                            style="margin-top: 15px;">この項目を削除</button>
                     </div>
-                <% }); %>
+                    <% }); %>
             </div>
             <div class="admin-actions">
                 <button type="button" class="btn btn-secondary" onclick="addField()">項目を追加</button>
@@ -37,9 +42,50 @@
     </div>
 
     <script>
-        function addField() { /* (JavaScriptは変更なし) */ }
-        function removeField(button) { /* (JavaScriptは変更なし) */ }
-        function toggleOptions(select) { /* (JavaScriptは変更なし) */ }
+        /**
+         * 新しいフォーム項目を動的に追加する関数
+         */
+        function addField() {
+            const container = document.getElementById('fields-container');
+            // 現在の項目数を数えて、新しいインデックスを決定
+            const index = container.getElementsByClassName('field-item').length;
+
+            const newItem = document.createElement('div');
+            newItem.className = 'field-item';
+            // name属性が "fields[新しいインデックス][プロパティ]" となるように設定
+            newItem.innerHTML = `
+                <label>質問文:</label>
+                <input type="text" name="fields[${index}][label]" required>
+                <label>種類:</label>
+                <select name="fields[${index}][type]" onchange="toggleOptions(this)">
+                    <option value="text">一行テキスト</option>
+                    <option value="textarea">複数行テキスト</option>
+                    <option value="radio">ラジオボタン</option>
+                </select>
+                <div class="options-container" style="display: none; margin-top: 10px;">
+                    <label>選択肢 (カンマ区切り):</label>
+                    <input type="text" name="fields[${index}][options]">
+                </div>
+                <button type="button" class="btn btn-danger" onclick="removeField(this)" style="margin-top: 15px;">この項目を削除</button>
+            `;
+            container.appendChild(newItem);
+        }
+
+        /**
+         * 項目を削除する関数
+         */
+        function removeField(button) {
+            button.parentElement.remove();
+        }
+
+        /**
+         * ラジオボタンの選択肢入力欄の表示/非表示を切り替える関数
+         */
+        function toggleOptions(select) {
+            const optionsContainer = select.parentElement.querySelector('.options-container');
+            optionsContainer.style.display = select.value === 'radio' ? 'block' : 'none';
+        }
     </script>
 </body>
+
 </html>
