@@ -1,0 +1,188 @@
+/* public/css/style.css */
+
+/* --- Google Fonts と基本設定 --- */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+:root {
+    --blurple: #5865F2;
+    --dark-bg: #2c2f33;
+    --darker-bg: #23272a;
+    --input-bg: #36393f;
+    --text-normal: #dcddde;
+    --text-muted: #99aab5;
+    --green: #43b581;
+    --red: #f04747;
+    --border-color: #40444b;
+}
+
+body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background-color: var(--dark-bg);
+    color: var(--text-normal);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    background-color: var(--darker-bg);
+    padding: 30px 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 700px;
+    box-sizing: border-box;
+}
+
+h1 {
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 25px;
+    font-weight: 700;
+}
+
+/* --- フォーム要素のスタイル --- */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-field, .field-item {
+    background-color: var(--dark-bg);
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+}
+
+label {
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: block;
+    color: var(--blurple);
+}
+
+input[type="text"],
+textarea,
+select {
+    width: 100%;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 10px;
+    color: var(--text-normal);
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--blurple);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* ラジオボタンのカスタムスタイル */
+.radio-group label {
+    color: var(--text-normal);
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+.radio-group input[type="radio"] {
+    display: none;
+}
+.radio-group input[type="radio"] + span {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    margin-right: 10px;
+    position: relative;
+    transition: all 0.2s;
+}
+.radio-group input[type="radio"]:checked + span {
+    border-color: var(--blurple);
+}
+.radio-group input[type="radio"]:checked + span::after {
+    content: '';
+    display: block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--blurple);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+
+/* --- ボタンのスタイル --- */
+.btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+.btn:active {
+    transform: translateY(1px);
+}
+
+.btn-primary {
+    background-color: var(--blurple);
+    color: #ffffff;
+}
+.btn-primary:hover {
+    background-color: #4752c4;
+}
+
+.btn-secondary {
+    background-color: var(--input-bg);
+    color: var(--text-normal);
+}
+.btn-secondary:hover {
+    background-color: #40444b;
+}
+
+.btn-danger {
+    background-color: var(--red);
+    color: #ffffff;
+}
+.btn-danger:hover {
+    background-color: #d83f3f;
+}
+
+.admin-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+}
+
+
+/* --- thanksページ --- */
+.thanks-container {
+    text-align: center;
+}
+.thanks-container svg {
+    width: 80px;
+    height: 80px;
+    color: var(--green);
+    margin-bottom: 20px;
+}

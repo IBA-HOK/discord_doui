@@ -16,6 +16,7 @@ const DB_DIR = path.join(__dirname, 'db');
 const DB_PATH = path.join(DB_DIR, 'database.db');
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const TARGET_FORUM_ID = process.env.FORUM_CHANNEL_ID;
+const MY_URL = process.env.URL;
 
 // --- Express と Discord クライアントの初期化 ---
 const app = express();
@@ -51,7 +52,7 @@ discordClient.once(Events.ClientReady, c => {
 discordClient.on(Events.ThreadCreate, async thread => {
     if (thread.parentId === TARGET_FORUM_ID) {
         const uniqueId = crypto.randomUUID();
-        const accessUrl = `http://localhost:${PORT}/agreement/${uniqueId}`;
+        const accessUrl = `http://${MY_URL}:${PORT}/agreement/${uniqueId}`;
 
         try {
             // submissionsテーブルに直接INSERT
@@ -69,10 +70,51 @@ discordClient.on(Events.ThreadCreate, async thread => {
         }
     }
 });
+discordClient.on(Events.InteractionCreate, async interaction => {
+    if (!interaction.isChatInputCommand()) return;
 
+    if (interaction.commandName === 'form') {
+        // スレッド内で実行されたか確認
+        if (!interaction.channel.isThread()) {
+            await interaction.reply({ content: 'このコマンドはスレッド内でのみ実行できます。', ephemeral: true });
+            return;
+        }
+
+        const threadId = interaction.channelId;
+
+        try {
+            // 既にこのスレッド用のフォームが存在するかチェック
+            const existingSubmission = await db.get('SELECT * FROM submissions WHERE thread_id = ?', threadId);
+            if (existingSubmission) {
+                const existingUrl = `http://${MY_URL}:${PORT}/agreement/${existingSubmission.id}`;
+                await interaction.reply({ content: `このスレッドには既にフォームが発行されています。\n**URL:** ${existingUrl}`, ephemeral: true });
+                return;
+            }
+
+            // 新しいIDとURLを生成
+            const uniqueId = crypto.randomUUID();
+            const accessUrl = `http://${MY_URL}:${PORT}/agreement/${uniqueId}`;
+
+            // DBにIDのペアを保存
+            await db.run('INSERT INTO submissions (id, thread_id) VALUES (?, ?)', uniqueId, threadId);
+            
+            const replyMessage = `フォームのURLを発行しました。\n` +
+                                 `以下のURLから手続きを開始してください。\n\n` +
+                                 `**URL:** ${accessUrl}`;
+
+            await interaction.reply({ content: replyMessage });
+            console.log(`✅ 手動でフォームを発行しました (Thread ID: ${threadId})`);
+
+        } catch (error) {
+            console.error('❌ /form コマンドの処理中にエラー:', error);
+            await interaction.reply({ content: 'フォームの発行中にエラーが発生しました。', ephemeral: true });
+        }
+    }
+});
 
 // --- Express ミドルウェア設定 ---
 app.set('view engine', 'ejs');
+app.use(express.static('public')); // [追加] この行を追加
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
