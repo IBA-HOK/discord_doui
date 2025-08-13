@@ -8,7 +8,7 @@ const { Client, GatewayIntentBits, Events, EmbedBuilder } = require('discord.js'
 require('dotenv').config();
 
 // --- 基本設定 ---
-const PORT = 8000;
+const PORT = process.env.PORT || 8000; // ポート番号を環境変数から取得、デフォルトは8000
 const DB_DIR = path.join(__dirname, 'db');
 const DB_PATH = path.join(DB_DIR, 'database.db');
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
@@ -17,7 +17,7 @@ const MY_URL = process.env.URL;
 
 const app = express();
 const discordClient = new Client({ intents: [GatewayIntentBits.Guilds] });
-let db; 
+let db;
 
 async function initializeDatabase() {
     try {
@@ -47,7 +47,7 @@ discordClient.once(Events.ClientReady, c => {
 discordClient.on(Events.ThreadCreate, async thread => {
     if (thread.parentId === TARGET_FORUM_ID) {
         const uniqueId = crypto.randomUUID();
-        const accessUrl = `http://${MY_URL}:${PORT}/agreement/${uniqueId}`;
+        const accessUrl = `${MY_URL}:${PORT}/agreement/${uniqueId}`;
 
         try {
             // submissionsテーブルに直接INSERT
@@ -55,8 +55,8 @@ discordClient.on(Events.ThreadCreate, async thread => {
             console.log(`💾 DBにIDペアを保存しました: { ${uniqueId}: ${thread.id} }`);
 
             const messageContent = `スレッドの作成ありがとうございます！\n` +
-                                   `以下のURLにアクセスして、手続きを開始してください。\n\n` +
-                                   `**URL:** ${accessUrl}`;
+                `以下のURLにアクセスして、手続きを開始してください。\n\n` +
+                `**URL:** ${accessUrl}`;
             await thread.send(messageContent);
             console.log(`スレッド「${thread.name}」にURLを送信しました。`);
 
@@ -81,21 +81,21 @@ discordClient.on(Events.InteractionCreate, async interaction => {
             // 既にこのスレッド用のフォームが存在するかチェック
             const existingSubmission = await db.get('SELECT * FROM submissions WHERE thread_id = ?', threadId);
             if (existingSubmission) {
-                const existingUrl = `http://${MY_URL}:${PORT}/agreement/${existingSubmission.id}`;
+                const existingUrl = `${MY_URL}:${PORT}/agreement/${existingSubmission.id}`;
                 await interaction.reply({ content: `このスレッドには既にフォームが発行されています。\n**URL:** ${existingUrl}`, ephemeral: true });
                 return;
             }
 
             // 新しいIDとURLを生成
             const uniqueId = crypto.randomUUID();
-            const accessUrl = `http://${MY_URL}:${PORT}/agreement/${uniqueId}`;
+            const accessUrl = `${MY_URL}:${PORT}/agreement/${uniqueId}`;
 
             // DBにIDのペアを保存
             await db.run('INSERT INTO submissions (id, thread_id) VALUES (?, ?)', uniqueId, threadId);
-            
+
             const replyMessage = `フォームのURLを発行しました。\n` +
-                                 `以下のURLから手続きを開始してください。\n\n` +
-                                 `**URL:** ${accessUrl}`;
+                `以下のURLから手続きを開始してください。\n\n` +
+                `**URL:** ${accessUrl}`;
 
             await interaction.reply({ content: replyMessage });
             console.log(`✅ 手動でフォームを発行しました (Thread ID: ${threadId})`);
@@ -172,10 +172,10 @@ app.post('/agreement/:uniqueId', async (req, res) => {
         }
         await db.run('UPDATE submissions SET status = ? WHERE id = ?', 'completed', uniqueId);
         await db.run('COMMIT');
-        
+
         const submission = await db.get('SELECT thread_id FROM submissions WHERE id = ?', uniqueId);
         await notifyDiscord(submission.thread_id, submittedAnswers);
-        
+
         res.render('thanks');
     } catch (error) {
         await db.run('ROLLBACK');
@@ -184,14 +184,34 @@ app.post('/agreement/:uniqueId', async (req, res) => {
 });
 
 
-// --- Discord通知機能 ---
 async function notifyDiscord(threadId, answers) {
     try {
         const thread = await discordClient.channels.fetch(threadId);
         if (!thread || !thread.isTextBased()) return;
         const fields = await db.all('SELECT id, label FROM fields ORDER BY field_order');
-        const embedFields = fields.map(field => ({ name: field.label, value: `- ${answers[field.id]}` || '(未回答)', inline: false }));
-        const embed = new EmbedBuilder().setColor(0x5865F2).setTitle('📝 フォームの回答が提出されました').addFields(embedFields).setTimestamp();
+        const embedFields = fields.map(field => {
+            let answer = answers[field.id];
+            if (!answer || answer.trim() === '') {
+                return { name: field.label, value: '> (未回答)', inline: false };
+            }
+            let cleanedAnswer = answer.trim();
+            const formattedAnswer = cleanedAnswer
+                .split('\n')
+                .map(line => `> ${line}`) 
+                .join('\n');
+            return {
+                name: field.label,
+                value: formattedAnswer,
+                inline: false
+            };
+        });
+
+        const embed = new EmbedBuilder()
+            .setColor(0x5865F2)
+            .setTitle('📝 フォームの回答が提出されました')
+            .addFields(embedFields)
+            .setTimestamp();
+
         await thread.send({ embeds: [embed] });
         console.log(`✅ Discordスレッドに通知を送信しました (ID: ${threadId})`);
     } catch (error) {
@@ -206,10 +226,10 @@ async function main() {
         console.error('エラー: .envファイルに DISCORD_BOT_TOKEN と FORUM_CHANNEL_ID を設定してください。');
         return;
     }
-    
+
     db = await initializeDatabase();      // データベースを準備
     await discordClient.login(BOT_TOKEN); // Botをログインさせる
-    
+
     app.listen(PORT, () => {              // Webサーバーを起動
         console.log(`✅ Webサーバーが http://localhost:${PORT} で起動しました。`);
         console.log(`🔑 管理者ページ: http://localhost:${PORT}/admin`);
