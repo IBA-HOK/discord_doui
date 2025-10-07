@@ -56,10 +56,10 @@ Discordのスレッド作成時に、自動で動的なWebフォームを生成�
     
     # ユーザーがアクセスするWebサーバーの公開URL (ポート番号なし)
     # ローカルで試す場合: URL="http://localhost:8000"
-    # 本番環境の場合: URL="[https://your-domain.com](https://your-domain.com)"
-    URL="http://localhost:8000"
+    # 本番環境の場合: URL="[https://your-domain.example.co.jp](https://your-domain.example.co.jp)"
+    URL="http://localhost"
     
-    # 内部でリッスンするポート番号 (任意)
+    # 内部でリッスンするポート番号
     PORT=8000
     ```
 
